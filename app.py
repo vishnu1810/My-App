@@ -34,14 +34,14 @@ def init_db():
     conn.close()
 
 # Drop the old users table (run once, then remove)
-def drop_users_table():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute("DROP TABLE IF EXISTS users")
-    conn.commit()
-    conn.close()
+# def drop_users_table():
+#     conn = sqlite3.connect('users.db')
+#     c = conn.cursor()
+#     c.execute("DROP TABLE IF EXISTS users")
+#     conn.commit()
+#     conn.close()
 
-drop_users_table()
+# drop_users_table()
 
 # Ensure admin user exists
 def ensure_admin():
@@ -137,7 +137,7 @@ def confirm_email(token):
 @app.route("/dashboard")
 def dashboard():
     if "user" in session:
-        if session["user"] == "admin":
+        if session["user"] == "admin@admin.com":
             # Show all users as a table
             conn = sqlite3.connect('users.db')
             c = conn.cursor()
