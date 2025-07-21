@@ -117,7 +117,7 @@ def register():
                 )
             """)
             c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
-                      (firstname, lastname, email, hashed_pw = password))
+                      (firstname, lastname, email, hashed_pw))
             conn.commit()
             conn.close()
             return redirect(url_for("login"))
