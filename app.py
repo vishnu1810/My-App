@@ -69,20 +69,20 @@ ensure_admin()
 def login():
     error = None
     if request.method == "POST":
-        username = request.form["username"]
+        email = request.form["email"]
         password = request.form["password"].encode('utf-8')
 
         conn = sqlite3.connect('users.db')
         c = conn.cursor()
-        c.execute("SELECT * FROM users WHERE username=?", (username,))
+        c.execute("SELECT * FROM users WHERE email=?", (email,))
         user = c.fetchone()
         conn.close()
 
-        if user and bcrypt.checkpw(password, user[2]):
-            session["user"] = username
+        if user and bcrypt.checkpw(password, user[4]):
+            session["user"] = email
             return redirect(url_for("dashboard"))
         else:
-            error = "Invalid username or password."
+            error = "Invalid email or password."
     return render_template("login.html", error=error)
 
 @app.route("/register", methods=["GET", "POST"])
