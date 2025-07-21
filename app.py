@@ -73,19 +73,39 @@ def login():
 def register():
     error = None
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"].encode('utf-8')
-        hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
+        firstname = request.form["firstname"]
+        lastname = request.form["lastname"]
+        email = request.form["email"]
+        password = request.form["password"]
+        verifypassword = request.form["verifypassword"]
+
+        if password != verifypassword:
+            error = "Passwords do not match."
+            return render_template("register.html", error=error)
+
+        #hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        hashed_pw = password
 
         try:
             conn = sqlite3.connect('users.db')
             c = conn.cursor()
-            c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hashed_pw))
+            # Add columns for firstname, lastname, email if not present in your DB schema
+            c.execute("""
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    firstname TEXT,
+                    lastname TEXT,
+                    email TEXT UNIQUE NOT NULL,
+                    password TEXT NOT NULL
+                )
+            """)
+            c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
+                      (firstname, lastname, email, hashed_pw))
             conn.commit()
             conn.close()
             return redirect(url_for("login"))
         except sqlite3.IntegrityError:
-            error = "Username already exists."
+            error = "Email already exists."
     return render_template("register.html", error=error)
 
 @app.route("/confirm/<token>")
