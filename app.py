@@ -107,7 +107,7 @@ def dashboard():
             # Show all users as a table
             conn = sqlite3.connect('users.db')
             c = conn.cursor()
-            c.execute("SELECT * FROM users")
+            c.execute("SELECT username, password FROM users")
             users = c.fetchall()
             conn.close()
             table_rows = ''.join(f"<tr><td>{u[0]}</td><td>{u[1]}</td></tr>" for u in users)
