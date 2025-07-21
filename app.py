@@ -104,14 +104,20 @@ def confirm_email(token):
 def dashboard():
     if "user" in session:
         if session["user"] == "admin":
-            # Show all users
+            # Show all users as a table
             conn = sqlite3.connect('users.db')
             c = conn.cursor()
-            c.execute("SELECT username FROM users")
+            c.execute("SELECT * FROM users")
             users = c.fetchall()
             conn.close()
-            user_list = '<br>'.join(u[0] for u in users)
-            return f"<h2>Welcome, admin!</h2><h3>Registered Users:</h3><p>{user_list}</p><p><a href='/logout'>Logout</a></p>"
+            table_rows = ''.join(f"<tr><td>{u[0]}</td><td>{u[1]}</td></tr>" for u in users)
+            user_table = f"""
+                <table border='1' cellpadding='5'>
+                    <tr><th>Username</th><th>Password Hash</th></tr>
+                    {table_rows}
+                </table>
+            """
+            return f"<h2>Welcome, admin!</h2><h3>Registered Users:</h3>{user_table}<p><a href='/logout'>Logout</a></p>"
         else:
             return f"<h2>Welcome, {session['user']}!</h2><p><a href='/logout'>Logout</a></p>"
     else:
