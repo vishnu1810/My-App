@@ -32,6 +32,16 @@ def init_db():
     conn.close()
 
 
+# Drop the old users table (run once, then remove)
+def drop_users_table():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("DROP TABLE IF EXISTS users")
+    conn.commit()
+    conn.close()
+
+drop_users_table()
+
 # Ensure admin user exists
 def ensure_admin():
     conn = sqlite3.connect('users.db')
