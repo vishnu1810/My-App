@@ -90,26 +90,24 @@ def confirm_email(token):
 def dashboard():
     if "user" in session:
         return f"<h2>Welcome, {session['user']}!</h2><p><a href='/logout'>Logout</a></p>"
-    token = s.dumps(session['user'], salt='email-confirm')
-    link = url_for('confirm_email', token=token, _external=True)
-
-    msg = Message('Confirm your Email', sender='your-email@gmail.com', recipients=[session['user']])
-    msg.body = f'Click this link to verify your email: {link}'
-    mail.send(msg)
-
-    return f"Verification email sent to {session['user']}. Click the link in your inbox."
+    else:
+        return redirect(url_for("login"))
 
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
-    token = s.dumps(session['user'], salt='email-confirm')
-    link = url_for('confirm_email', token=token, _external=True)
+    if "user" in session:
+        username = session["user"]
+        session.pop("user", None)
+        token = s.dumps(username, salt='email-confirm')
+        link = url_for('confirm_email', token=token, _external=True)
 
-    msg = Message('Confirm your Email', sender='your-email@gmail.com', recipients=[session['user']])
-    msg.body = f'Click this link to verify your email: {link}'
-    mail.send(msg)
+        msg = Message('Confirm your Email', sender='your-email@gmail.com', recipients=[username])
+        msg.body = f'Click this link to verify your email: {link}'
+        mail.send(msg)
 
-    return f"Verification email sent to {session['user']}. Click the link in your inbox."
+        return f"Verification email sent to {username}. Click the link in your inbox."
+    else:
+        return redirect(url_for("login"))
 
 if __name__ == "__main__":
     app.run(debug=True)
