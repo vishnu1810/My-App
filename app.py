@@ -35,14 +35,14 @@ def init_db():
 
 
 # Drop the old users table (run once, then remove)
-def drop_users_table():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute("DROP TABLE IF EXISTS users")
-    conn.commit()
-    conn.close()
+# def drop_users_table():
+#     conn = sqlite3.connect('users.db')
+#     c = conn.cursor()
+#     c.execute("DROP TABLE IF EXISTS users")
+#     conn.commit()
+#     conn.close()
 
-drop_users_table()
+# drop_users_table()
 
 # Ensure admin user exists
 def ensure_admin():
@@ -51,7 +51,7 @@ def ensure_admin():
     c.execute("SELECT * FROM users WHERE email=?", ("admin@admin.com",))
     if not c.fetchone():
         firstname = "Admin"
-        lastname = "User"
+        lastname = "admin"
         email = "admin@admin.com"
         password = b"admin@1234"
         hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
