@@ -34,16 +34,6 @@ def init_db():
     conn.close()
 
 
-# Drop the old users table (run once, then remove)
-def drop_users_table():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute("DROP TABLE IF EXISTS users")
-    conn.commit()
-    conn.close()
-
-drop_users_table()
-
 # Ensure admin user exists
 def ensure_admin():
     conn = sqlite3.connect('users.db')
@@ -54,8 +44,7 @@ def ensure_admin():
         lastname = "admin"
         email = "admin@admin.com"
         password = b"admin@1234"
-        #hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
-        hashed_pw = password
+        hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
         c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
                   (firstname, lastname, email, hashed_pw))
         conn.commit()
@@ -79,7 +68,7 @@ def login():
         user = c.fetchone()
         conn.close()
 
-        if user and (password, user[4]):
+        if user and bcrypt.checkpw(password, user[4]):
             session["user"] = email
             return redirect(url_for("dashboard"))
         else:
@@ -100,13 +89,11 @@ def register():
             error = "Passwords do not match."
             return render_template("register.html", error=error)
 
-        #hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-        hashed_pw = password
+        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
         try:
             conn = sqlite3.connect('users.db')
             c = conn.cursor()
-            # Add columns for firstname, lastname, email if not present in your DB schema
             c.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
