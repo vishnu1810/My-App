@@ -34,12 +34,12 @@ def init_db():
     conn.close()
 
 # Drop the old users table (run once, then remove)
-# def drop_users_table():
-#     conn = sqlite3.connect('users.db')
-#     c = conn.cursor()
-#     c.execute("DROP TABLE IF EXISTS users")
-#     conn.commit()
-#     conn.close()
+def drop_users_table():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("DROP TABLE IF EXISTS users")
+    conn.commit()
+    conn.close()
 
 # drop_users_table()
 
@@ -55,7 +55,7 @@ def ensure_admin():
         password = b"admin@1234"
         hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
         c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
-                  (firstname, lastname, email, hashed_pw))
+                  (firstname, lastname, email, password))
         conn.commit()
     conn.close()
 
@@ -113,8 +113,9 @@ def register():
                     password TEXT NOT NULL
                 )
             """)
+            
             c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
-                      (firstname, lastname, email, hashed_pw))
+                      (firstname, lastname, email, password))
             conn.commit()
             conn.close()
             return redirect(url_for("login"))
@@ -154,12 +155,28 @@ def dashboard():
                               f"<td><a href='/delete_user/{u[0]}' onclick=\"return confirm('Are you sure you want to delete this user?');\">Delete</a></td>"
                 table_rows += f"<tr><td>{u[1]}</td><td>{u[2]}</td><td>{u[3]}</td><td>{u[4]}</td>{actions}</tr>"
             user_table = f"""
-                <table border='1' cellpadding='5'>
+                <style>
+                body {{ font-family: Arial, sans-serif; background: #f7f7f7; }}
+                h2, h3 {{ color: #333; }}
+                table {{ border-collapse: collapse; width: 90%; margin: 20px auto; background: #fff; box-shadow: 0 2px 8px #ccc; }}
+                th, td {{ border: 1px solid #ddd; padding: 10px 8px; text-align: left; }}
+                th {{ background: #007bff; color: #fff; }}
+                tr:nth-child(even) {{ background: #f2f2f2; }}
+                a {{ color: #007bff; text-decoration: none; }}
+                a:hover {{ text-decoration: underline; }}
+                .logout-link {{ display: block; width: 90%; margin: 20px auto; text-align: right; }}
+                </style>
+                <table>
                     <tr><th>First Name</th><th>Last Name</th><th>Email</th><th>Password Hash</th><th>Edit</th><th>Delete</th></tr>
                     {table_rows}
                 </table>
             """
-            return f"<h2>Welcome, admin!</h2><h3>Registered Users:</h3>{user_table}<p><a href='/logout'>Logout</a></p>"
+            return f"<h2 style='text-align:center;'>Welcome, admin!</h2><h3 style='text-align:center;'>Registered Users:</h3>{user_table}<div class='logout-link'><a href='/logout'>Logout</a></div>"
+        else:
+            # Regular user dashboard
+            return f"<h2 style='text-align:center;'>Welcome, {session['user']}!</h2><div style='text-align:center; margin-top:30px;'><a href='/logout'>Logout</a></div>"
+    else:
+        return redirect(url_for("login"))
 @app.route("/delete_user/<int:user_id>")
 def delete_user(user_id):
     if "user" not in session or session["user"] != "admin@admin.com":
@@ -211,15 +228,35 @@ def edit_user(user_id):
             return "<h3>User not found.</h3><a href='/dashboard'>Back</a>"
         # Simple inline form
         return f'''
-            <h2>Edit User</h2>
+            <style>
+            body {{ font-family: Arial, sans-serif; background: #f7f7f7; }}
+            .edit-form {{ background: #fff; max-width: 400px; margin: 40px auto; padding: 30px 30px 20px 30px; border-radius: 8px; box-shadow: 0 2px 8px #ccc; }}
+            label {{ display: block; margin-bottom: 12px; color: #333; }}
+            input[type="text"], input[type="email"], input[type="password"] {{ width: 100%; padding: 8px; margin-top: 4px; border: 1px solid #ccc; border-radius: 4px; }}
+            input[type="submit"] {{ background: #007bff; color: #fff; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; margin-top: 10px; }}
+            input[type="submit"]:hover {{ background: #0056b3; }}
+            .cancel-link {{ display: block; margin-top: 18px; text-align: right; }}
+            .cancel-link a {{ color: #007bff; }}
+            </style>
+            <div class="edit-form">
+            <h2 style='text-align:center;'>Edit User</h2>
             <form method="post">
-                <label>First Name: <input type="text" name="firstname" value="{user[0]}" required></label><br>
-                <label>Last Name: <input type="text" name="lastname" value="{user[1]}" required></label><br>
-                <label>Email: <input type="email" name="email" value="{user[2]}" required></label><br>
-                <label>New Password (leave blank to keep unchanged): <input type="password" name="password"></label><br>
+                <label>First Name:
+                    <input type="text" name="firstname" value="{user[0]}" required>
+                </label>
+                <label>Last Name:
+                    <input type="text" name="lastname" value="{user[1]}" required>
+                </label>
+                <label>Email:
+                    <input type="email" name="email" value="{user[2]}" required>
+                </label>
+                <label>New Password <span style='color:#888;'>(optional)</span>:
+                    <input type="password" name="password" autocomplete="new-password">
+                </label>
                 <input type="submit" value="Update">
             </form>
-            <a href='/dashboard'>Cancel</a>
+            <div class="cancel-link"><a href='/dashboard'>Cancel</a></div>
+            </div>
         '''
 
 @app.route("/logout")
