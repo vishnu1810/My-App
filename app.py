@@ -33,6 +33,15 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Drop the old users table (run once, then remove)
+def drop_users_table():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("DROP TABLE IF EXISTS users")
+    conn.commit()
+    conn.close()
+
+drop_users_table()
 
 # Ensure admin user exists
 def ensure_admin():
@@ -94,6 +103,7 @@ def register():
         try:
             conn = sqlite3.connect('users.db')
             c = conn.cursor()
+            # Add columns for firstname, lastname, email if not present in your DB schema
             c.execute("""
                 CREATE TABLE IF NOT EXISTS users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
