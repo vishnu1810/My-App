@@ -4,8 +4,18 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import bcrypt
 
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Needed for sessions
+
+# Mail and Serializer setup (move above route definitions)
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'your-email@gmail.com'       # your Gmail
+app.config['MAIL_PASSWORD'] = 'your-app-password'          # Gmail app password
+mail = Mail(app)
+s = URLSafeTimedSerializer(app.secret_key)
 
 # --- Database Setup ---
 def init_db():
@@ -103,11 +113,3 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True)
-    app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-    app.config['MAIL_PORT'] = 587
-    app.config['MAIL_USE_TLS'] = True
-    app.config['MAIL_USERNAME'] = 'your-email@gmail.com'       # your Gmail
-    app.config['MAIL_PASSWORD'] = 'your-app-password'          # Gmail app password
-    mail = Mail(app)
-
-    s = URLSafeTimedSerializer(app.secret_key)
