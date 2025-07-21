@@ -38,7 +38,7 @@ def login():
         user = c.fetchone()
         conn.close()
 
-        if user and bcrypt.checkpw(password, user[2].encode('utf-8')):
+        if user and bcrypt.checkpw(password, user[2]):
             session["user"] = username
             return redirect(url_for("dashboard"))
         else:
