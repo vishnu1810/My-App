@@ -141,21 +141,86 @@ def dashboard():
             # Show all users as a table
             conn = sqlite3.connect('users.db')
             c = conn.cursor()
-            c.execute("SELECT firstname, lastname, email, password FROM users")
+            c.execute("SELECT id, firstname, lastname, email, password FROM users")
             users = c.fetchall()
             conn.close()
-            table_rows = ''.join(f"<tr><td>{u[0]}</td><td>{u[1]}</td><td>{u[2]}</td><td>{u[3]}</td></tr>" for u in users)
+            table_rows = ''
+            for u in users:
+                # Don't allow admin to delete or edit themselves
+                if u[3] == "admin@admin.com":
+                    actions = "<td></td><td></td>"
+                else:
+                    actions = f"<td><a href='/edit_user/{u[0]}'>Edit</a></td>" \
+                              f"<td><a href='/delete_user/{u[0]}' onclick=\"return confirm('Are you sure you want to delete this user?');\">Delete</a></td>"
+                table_rows += f"<tr><td>{u[1]}</td><td>{u[2]}</td><td>{u[3]}</td><td>{u[4]}</td>{actions}</tr>"
             user_table = f"""
                 <table border='1' cellpadding='5'>
-                    <tr><th>First Name</th><th>Last Name</th><th>Email</th><th>Password Hash</th></tr>
+                    <tr><th>First Name</th><th>Last Name</th><th>Email</th><th>Password Hash</th><th>Edit</th><th>Delete</th></tr>
                     {table_rows}
                 </table>
             """
             return f"<h2>Welcome, admin!</h2><h3>Registered Users:</h3>{user_table}<p><a href='/logout'>Logout</a></p>"
-        else:
-            return f"<h2>Welcome, {session['user']}!</h2><p><a href='/logout'>Logout</a></p>"
-    else:
+@app.route("/delete_user/<int:user_id>")
+def delete_user(user_id):
+    if "user" not in session or session["user"] != "admin@admin.com":
         return redirect(url_for("login"))
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    # Prevent deleting admin
+    c.execute("SELECT email FROM users WHERE id=?", (user_id,))
+    user = c.fetchone()
+    if user and user[0] != "admin@admin.com":
+        c.execute("DELETE FROM users WHERE id=?", (user_id,))
+        conn.commit()
+    conn.close()
+    return redirect(url_for("dashboard"))
+
+@app.route("/edit_user/<int:user_id>", methods=["GET", "POST"])
+def edit_user(user_id):
+    if "user" not in session or session["user"] != "admin@admin.com":
+        return redirect(url_for("login"))
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    if request.method == "POST":
+        firstname = request.form["firstname"]
+        lastname = request.form["lastname"]
+        email = request.form["email"]
+        password = request.form["password"]
+        # Don't allow editing admin user
+        c.execute("SELECT email FROM users WHERE id=?", (user_id,))
+        user = c.fetchone()
+        if user and user[0] == "admin@admin.com":
+            conn.close()
+            return "<h3>Cannot edit admin user.</h3><a href='/dashboard'>Back</a>"
+        # If password is not empty, update it (hash it), else keep old
+        if password:
+            hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+            c.execute("UPDATE users SET firstname=?, lastname=?, email=?, password=? WHERE id=?",
+                      (firstname, lastname, email, hashed_pw, user_id))
+        else:
+            c.execute("UPDATE users SET firstname=?, lastname=?, email=? WHERE id=?",
+                      (firstname, lastname, email, user_id))
+        conn.commit()
+        conn.close()
+        return redirect(url_for("dashboard"))
+    else:
+        c.execute("SELECT firstname, lastname, email FROM users WHERE id=?", (user_id,))
+        user = c.fetchone()
+        conn.close()
+        if not user:
+            return "<h3>User not found.</h3><a href='/dashboard'>Back</a>"
+        # Simple inline form
+        return f'''
+            <h2>Edit User</h2>
+            <form method="post">
+                <label>First Name: <input type="text" name="firstname" value="{user[0]}" required></label><br>
+                <label>Last Name: <input type="text" name="lastname" value="{user[1]}" required></label><br>
+                <label>Email: <input type="email" name="email" value="{user[2]}" required></label><br>
+                <label>New Password (leave blank to keep unchanged): <input type="password" name="password"></label><br>
+                <input type="submit" value="Update">
+            </form>
+            <a href='/dashboard'>Cancel</a>
+        '''
 
 @app.route("/logout")
 def logout():
