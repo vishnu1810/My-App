@@ -17,6 +17,16 @@ app.config['MAIL_PASSWORD'] = 'your-app-password'          # Gmail app password
 mail = Mail(app)
 s = URLSafeTimedSerializer(app.secret_key)
 
+
+def drop_users_table():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("DROP TABLE IF EXISTS users")
+    conn.commit()
+    conn.close()
+
+drop_users_table()  # <-- Add this line
+
 # --- Database Setup ---
 def init_db():
     conn = sqlite3.connect('users.db')
@@ -31,14 +41,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-def drop_users_table():
-    conn = sqlite3.connect('users.db')
-    c = conn.cursor()
-    c.execute("DROP TABLE IF EXISTS users")
-    conn.commit()
-    conn.close()
-# Call this function once, then remove it after the table is dropped
-drop_users_table()
 
 # Ensure admin user exists
 def ensure_admin():
