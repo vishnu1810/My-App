@@ -41,7 +41,7 @@ def drop_users_table():
     conn.commit()
     conn.close()
 
-# drop_users_table()
+drop_users_table()
 
 # Ensure admin user exists
 def ensure_admin():
@@ -52,10 +52,10 @@ def ensure_admin():
         firstname = "Admin"
         lastname = "admin"
         email = "admin@admin.com"
-        password = b"admin@1234"
-        hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
+        password = "admin@1234"
+        hashed_pw = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
-                  (firstname, lastname, email, password))
+                  (firstname, lastname, email, hashed_pw))
         conn.commit()
     conn.close()
 
@@ -115,7 +115,7 @@ def register():
             """)
             
             c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
-                      (firstname, lastname, email, password))
+                      (firstname, lastname, email, hashed_pw))
             conn.commit()
             conn.close()
             return redirect(url_for("login"))
