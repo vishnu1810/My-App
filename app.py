@@ -31,6 +31,14 @@ def init_db():
     conn.commit()
     conn.close()
 
+def drop_users_table():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("DROP TABLE IF EXISTS users")
+    conn.commit()
+    conn.close()
+# Call this function once, then remove it after the table is dropped
+drop_users_table()
 
 # Ensure admin user exists
 def ensure_admin():
