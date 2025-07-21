@@ -24,7 +24,9 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
+            firstname TEXT,
+            lastname TEXT,
+            email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL
         )
     ''')
@@ -46,11 +48,15 @@ drop_users_table()
 def ensure_admin():
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM users WHERE username=?", ("admin",))
+    c.execute("SELECT * FROM users WHERE email=?", ("admin@admin.com",))
     if not c.fetchone():
+        firstname = "Admin"
+        lastname = "User"
+        email = "admin@admin.com"
         password = b"admin@1234"
         hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
-        c.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("admin", hashed_pw))
+        c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
+                  (firstname, lastname, email, hashed_pw))
         conn.commit()
     conn.close()
 
@@ -137,13 +143,13 @@ def dashboard():
             # Show all users as a table
             conn = sqlite3.connect('users.db')
             c = conn.cursor()
-            c.execute("SELECT username, password FROM users")
+            c.execute("SELECT firstname, lastname, email, password FROM users")
             users = c.fetchall()
             conn.close()
-            table_rows = ''.join(f"<tr><td>{u[0]}</td><td>{u[1]}</td></tr>" for u in users)
+            table_rows = ''.join(f"<tr><td>{u[0]}</td><td>{u[1]}</td><td>{u[2]}</td><td>{u[3]}</td></tr>" for u in users)
             user_table = f"""
                 <table border='1' cellpadding='5'>
-                    <tr><th>Username</th><th>Password Hash</th></tr>
+                    <tr><th>First Name</th><th>Last Name</th><th>Email</th><th>Password Hash</th></tr>
                     {table_rows}
                 </table>
             """
