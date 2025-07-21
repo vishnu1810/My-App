@@ -54,7 +54,8 @@ def ensure_admin():
         lastname = "admin"
         email = "admin@admin.com"
         password = b"admin@1234"
-        hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
+        #hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
+        hashed_pw = password
         c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
                   (firstname, lastname, email, hashed_pw))
         conn.commit()
@@ -78,7 +79,7 @@ def login():
         user = c.fetchone()
         conn.close()
 
-        if user and bcrypt.checkpw(password, user[4]):
+        if user and (password, user[4]):
             session["user"] = email
             return redirect(url_for("dashboard"))
         else:
@@ -116,7 +117,7 @@ def register():
                 )
             """)
             c.execute("INSERT INTO users (firstname, lastname, email, password) VALUES (?, ?, ?, ?)",
-                      (firstname, lastname, email, hashed_pw))
+                      (firstname, lastname, email, hashed_pw = password))
             conn.commit()
             conn.close()
             return redirect(url_for("login"))
