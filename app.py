@@ -31,7 +31,21 @@ def init_db():
     conn.commit()
     conn.close()
 
+
+# Ensure admin user exists
+def ensure_admin():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM users WHERE username=?", ("admin",))
+    if not c.fetchone():
+        password = b"admin@1234"
+        hashed_pw = bcrypt.hashpw(password, bcrypt.gensalt())
+        c.execute("INSERT INTO users (username, password) VALUES (?, ?)", ("admin", hashed_pw))
+        conn.commit()
+    conn.close()
+
 init_db()
+ensure_admin()
 
 # --- Routes ---
 
@@ -89,7 +103,17 @@ def confirm_email(token):
 @app.route("/dashboard")
 def dashboard():
     if "user" in session:
-        return f"<h2>Welcome, {session['user']}!</h2><p><a href='/logout'>Logout</a></p>"
+        if session["user"] == "admin":
+            # Show all users
+            conn = sqlite3.connect('users.db')
+            c = conn.cursor()
+            c.execute("SELECT username FROM users")
+            users = c.fetchall()
+            conn.close()
+            user_list = '<br>'.join(u[0] for u in users)
+            return f"<h2>Welcome, admin!</h2><h3>Registered Users:</h3><p>{user_list}</p><p><a href='/logout'>Logout</a></p>"
+        else:
+            return f"<h2>Welcome, {session['user']}!</h2><p><a href='/logout'>Logout</a></p>"
     else:
         return redirect(url_for("login"))
 
